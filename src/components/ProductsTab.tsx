@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import type { Product } from '../types/inventory'
+import { supabase } from '../lib/supabase'
+
 
 type Props = {
     products: Product[]
-    onAdd: (name: string, qty: number) => void
+    onAdd: (id: number, name: string, qty: number) => void
     onRemove: (id: number) => void
 }
 
@@ -11,10 +13,22 @@ export default function ProductsTab({ products, onAdd, onRemove }: Props) {
     const [name, setName] = useState('')
     const [qty, setQty] = useState('')
 
-    function handleAdd() {
+    async function handleAdd() {
         const parsedQty = parseInt(qty)
         if (!name.trim() || isNaN(parsedQty) || parsedQty < 1) return
-        onAdd(name.trim(), parsedQty)
+        
+        const {data, error } = await supabase
+            .from('products')
+            .insert({ name: name.trim(), qty: parsedQty })
+            .select()
+            .single()
+
+        if (error) {
+            console.error(error.message)
+            return
+        }
+
+        onAdd(data.id,name.trim(), parsedQty)
         setName('')
         setQty('')
     }

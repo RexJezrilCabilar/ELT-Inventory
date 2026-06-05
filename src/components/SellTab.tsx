@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Product } from '../types/inventory'
+import { supabase } from '../lib/supabase'
 
 type Props = {
     products: Product[]
@@ -15,10 +16,34 @@ export default function SellTab({ products, onSell }: Props) {
         setQuantities(prev => ({ ...prev, [id]: val }))
     }
 
-    function handleSell(product: Product) {
+    async function handleSell(product: Product) {
         const raw = quantities[product.id]
         const qty = parseInt(raw ?? '1')
         if (isNaN(qty) || qty < 1 || qty > product.qty) return
+
+        const { error: updateError } = await supabase
+            .from('products')
+            .update({ qty: product.qty - qty })
+            .eq('id', product.id)
+
+        if (updateError) {
+            console.error(updateError.message)
+            return
+        }
+
+        const { error: insertError } = await supabase
+            .from('transactions')
+            .insert({
+                product_id: product.id,
+                product_name: product.name,
+                qty_sold: qty,
+            })
+
+        if (insertError) {
+            console.error(insertError.message)
+            return
+        }
+
         onSell(product.id, qty)
         setQuantities(prev => ({ ...prev, [product.id]: '' }))
     }
