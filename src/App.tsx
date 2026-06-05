@@ -1,122 +1,106 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import ProductsTab from './components/ProductsTab'
+import SellTab from './components/SellTab'
+import DashboardTab from './components/DashboardTab'
+import type { Product, Transaction } from './types/inventory'
 
-function App() {
-  const [count, setCount] = useState(0)
+type Tab = 'products' | 'sell' | 'dashboard'
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+export default function Inventory() {
+    const [activeTab, setActiveTab] = useState<Tab>('products')
+    const [products, setProducts] = useState<Product[]>([])
+    const [transactions, setTransactions] = useState<Transaction[]>([])
+
+    function handleAddProduct(name: string, qty: number) {
+        setProducts(prev => {
+            const existing = prev.find(p => p.name.toLowerCase() === name.toLowerCase())
+            if (existing) {
+                return prev.map(p => p.id === existing.id ? { ...p, qty: p.qty + qty } : p)
+            }
+            return [...prev, { id: Date.now(), name, qty }]
+        })
+    }
+
+    function handleRemoveProduct(id: number) {
+        setProducts(prev => prev.filter(p => p.id !== id))
+    }
+
+    function handleSell(productId: number, qty: number) {
+        const product = products.find(p => p.id === productId)
+        if (!product) return
+
+        setProducts(prev =>
+            prev
+                .map(p => p.id === productId ? { ...p, qty: p.qty - qty } : p)
+                .filter(p => p.qty > 0)
+        )
+
+        setTransactions(prev => [
+            ...prev,
+            {
+                id: Date.now(),
+                product_id: productId,
+                product_name: product.name,
+                qty_sold: qty,
+                sold_at: new Date().toISOString(),
+            },
+        ])
+    }
+
+    const tabs: { key: Tab; label: string }[] = [
+        { key: 'products', label: 'Products' },
+        { key: 'sell', label: 'Sell' },
+        { key: 'dashboard', label: 'Dashboard' },
+    ]
+
+    return (
+        <div className="min-h-screen bg-white">
+            <div className="max-w-2xl mx-auto px-4 py-10">
+
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-xl font-medium">Inventory</h1>
+                    <p className="text-sm text-black/40 mt-1">Manage your products and sales</p>
+                </div>
+
+                {/* Tabs */}
+                <div className="flex border-b border-black/10 mb-6">
+                    {tabs.map(t => (
+                        <button
+                            key={t.key}
+                            onClick={() => setActiveTab(t.key)}
+                            className={`px-5 py-2.5 text-sm border-b-2 transition-colors ${
+                                activeTab === t.key
+                                    ? 'border-black text-black font-medium'
+                                    : 'border-transparent text-black/40 hover:text-black/70'
+                            }`}
+                        >
+                            {t.label}
+                        </button>
+                    ))}
+                </div>
+
+                {/* Tab content */}
+                {activeTab === 'products' && (
+                    <ProductsTab
+                        products={products}
+                        onAdd={handleAddProduct}
+                        onRemove={handleRemoveProduct}
+                    />
+                )}
+                {activeTab === 'sell' && (
+                    <SellTab
+                        products={products}
+                        onSell={handleSell}
+                    />
+                )}
+                {activeTab === 'dashboard' && (
+                    <DashboardTab
+                        transactions={transactions}
+                        products={products}
+                    />
+                )}
+            </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    )
 }
-
-export default App
