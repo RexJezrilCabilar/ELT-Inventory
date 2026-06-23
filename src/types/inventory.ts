@@ -1,8 +1,13 @@
+export type Category = {
+    id: number
+    category_name: string
+}
+
 export type Product = {
     id: number
     name: string
     qty: number
-    created_at?: string
+    category_id: number | null
 }
 
 export type Transaction = {
@@ -11,9 +16,4 @@ export type Transaction = {
     product_name: string
     qty_sold: number
     sold_at: string
-}
-
-export type SalesByDate = {
-    date: string
-    total: number
 }
