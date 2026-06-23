@@ -45,7 +45,7 @@ export default function Inventory() {
         setProducts(prev => prev.filter(p => p.id !== id))
     }
 
-    async function handleSell(productId: number, qty: number) {
+    async function handleSell(_productId: number, _qty: number) {
         // Re-fetch fresh data from Supabase instead of mutating local state
         const [{ data: productData }, { data: transactionData }] = await Promise.all([
             supabase.from('products').select('*').order('id', { ascending: true }),
