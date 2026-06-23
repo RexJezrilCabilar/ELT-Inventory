@@ -122,7 +122,7 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                             >
                                 <option value="">No category</option>
                                 {categories.map(c => (
-                                    <option key={c.id} value={c.id}>
+                                    <option key={c.category_id} value={c.category_id}>
                                         {c.category_name}
                                     </option>
                                 ))}
@@ -159,7 +159,7 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                     <div className="divide-y" style={{ borderColor: '#F0EDE6' }}>
                         {products.map(p => {
                             const catStyle = getCategoryStyle(p.category_id)
-                            const cat = categories.find(c => c.id === p.category_id)
+                            const cat = categories.find(c => c.category_id === p.category_id)
                             return (
                                 <div key={p.id} className="flex items-center justify-between py-3">
                                     <div className="flex flex-col gap-1">

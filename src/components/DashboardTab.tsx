@@ -190,12 +190,12 @@ export default function DashboardTab({ transactions, products, categories }: Pro
                     All
                 </button>
                 {categories.map(c => {
-                    const col = CATEGORY_COLORS[c.id] ?? DEFAULT_COLOR
-                    const isActive = selectedCategory === String(c.id)
+                    const col = CATEGORY_COLORS[c.category_id] ?? DEFAULT_COLOR
+                    const isActive = selectedCategory === String(c.category_id)
                     return (
                         <button
-                            key={c.id}
-                            onClick={() => setSelectedCategory(String(c.id))}
+                            key={c.category_id}
+                            onClick={() => setSelectedCategory(String(c.category_id))}
                             className="text-xs px-3 py-1.5 rounded-full font-medium border transition-all flex items-center gap-1.5"
                             style={
                                 isActive
@@ -257,7 +257,7 @@ export default function DashboardTab({ transactions, products, categories }: Pro
                             className="text-xs px-2.5 py-0.5 rounded-full"
                             style={{ backgroundColor: catColor.barBg, color: catColor.bar }}
                         >
-                            {categories.find(c => String(c.id) === selectedCategory)?.category_name}
+                            {categories.find(c => String(c.category_id) === selectedCategory)?.category_name}
                         </span>
                     )}
                 </div>
