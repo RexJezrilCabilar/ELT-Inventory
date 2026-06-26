@@ -326,7 +326,7 @@ export default function DashboardTab({ transactions, products, categories }: Pro
                                         className="text-xs rounded-full px-2.5 py-0.5 font-medium"
                                         style={{ backgroundColor: tColor.barBg, color: tColor.bar }}
                                     >
-                                        −{t.qty_sold}
+                                        −{t.qty_sold} kg
                                     </span>
                                 </div>
                             )

@@ -5,15 +5,15 @@ import { supabase } from '../lib/supabase'
 type Props = {
     products: Product[]
     categories: Category[]
-    onAdd: (id: number, name: string, qty: number, category_id: number | null) => void
+    onAdd: (id: number, name: string, qty: number, category_id: number) => void
     onRemove: (id: number) => void
 }
 
 const CATEGORY_COLORS: Record<number, { bg: string; text: string; dot: string }> = {
-    1: { bg: '#EBF5EC', text: '#2D6A35', dot: '#4CAF50' },   // Fresh Produce - green
-    2: { bg: '#FDECEA', text: '#7B2D2D', dot: '#E57373' },   // Meat - red
-    3: { bg: '#FEF9EC', text: '#7A5C1E', dot: '#F5B942' },   // Eggs - amber
-    4: { bg: '#EEF2FB', text: '#2D4070', dot: '#5C7ADB' },   // Grains & Legumes - blue
+    1: { bg: '#EBF5EC', text: '#2D6A35', dot: '#4CAF50' },
+    2: { bg: '#FDECEA', text: '#7B2D2D', dot: '#E57373' },
+    3: { bg: '#FEF9EC', text: '#7A5C1E', dot: '#F5B942' },
+    4: { bg: '#EEF2FB', text: '#2D4070', dot: '#5C7ADB' },
 }
 
 function getCategoryStyle(categoryId: number | null) {
@@ -27,29 +27,44 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
     const [name, setName] = useState('')
     const [qty, setQty] = useState('')
     const [categoryId, setCategoryId] = useState<string>('')
+    const [error, setError] = useState<string>('')
 
     async function handleAdd() {
-        const parsedQty = parseInt(qty)
-        if (!name.trim() || isNaN(parsedQty) || parsedQty < 1) return
+        setError('')
+        const parsedQty = parseFloat(qty)
 
-        const payload: { name: string; qty: number; category_id?: number } = {
+        if (!name.trim()) {
+            setError('Product name is required.')
+            return
+        }
+        if (!categoryId) {
+            setError('Please select a category.')
+            return
+        }
+        if (isNaN(parsedQty) || parsedQty <= 0) {
+            setError('Please enter a valid quantity in kg.')
+            return
+        }
+
+        const payload = {
             name: name.trim(),
             qty: parsedQty,
+            category_id: parseInt(categoryId),
         }
-        if (categoryId) payload.category_id = parseInt(categoryId)
 
-        const { data, error } = await supabase
+        const { data, error: supabaseError } = await supabase
             .from('products')
             .insert(payload)
             .select()
             .single()
 
-        if (error) {
-            console.error(error.message)
+        if (supabaseError) {
+            console.error(supabaseError.message)
+            setError('Failed to add product. Please try again.')
             return
         }
 
-        onAdd(data.id, name.trim(), parsedQty, categoryId ? parseInt(categoryId) : null)
+        onAdd(data.id, name.trim(), parsedQty, parseInt(categoryId))
         setName('')
         setQty('')
         setCategoryId('')
@@ -76,13 +91,13 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                 <div className="space-y-3">
                     <div>
                         <label className="text-xs font-medium block mb-1" style={{ color: '#9C9A94' }}>
-                            Product name
+                            Product name <span style={{ color: '#C0616A' }}>*</span>
                         </label>
                         <input
                             type="text"
                             value={name}
                             onChange={e => setName(e.target.value)}
-                            placeholder="e.g. Rice (5kg)"
+                            placeholder="e.g. Tomato"
                             className={inputClass}
                             style={inputStyle}
                             onFocus={e => (e.currentTarget.style.borderColor = '#5C8A5A')}
@@ -90,46 +105,63 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="text-xs font-medium block mb-1" style={{ color: '#9C9A94' }}>
-                                Quantity
-                            </label>
+                    <div>
+                        <label className="text-xs font-medium block mb-1" style={{ color: '#9C9A94' }}>
+                            Category <span style={{ color: '#C0616A' }}>*</span>
+                        </label>
+                        <select
+                            value={categoryId}
+                            onChange={e => setCategoryId(e.target.value)}
+                            className={inputClass}
+                            style={{
+                                ...inputStyle,
+                                appearance: 'auto',
+                                color: categoryId ? '#1C1C1A' : '#9C9A94',
+                            }}
+                            onFocus={e => (e.currentTarget.style.borderColor = '#5C8A5A')}
+                            onBlur={e => (e.currentTarget.style.borderColor = '#E2DDD6')}
+                        >
+                            <option value="" disabled>Select a category</option>
+                            {categories.map(c => (
+                                <option key={c.category_id} value={c.category_id}>
+                                    {c.category_name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="text-xs font-medium block mb-1" style={{ color: '#9C9A94' }}>
+                            Quantity (kg) <span style={{ color: '#C0616A' }}>*</span>
+                        </label>
+                        <div className="relative">
                             <input
                                 type="number"
                                 value={qty}
                                 onChange={e => setQty(e.target.value)}
-                                placeholder="e.g. 50"
-                                min={1}
+                                placeholder="e.g. 12.5"
+                                min={0.01}
+                                step={0.01}
                                 className={inputClass}
-                                style={inputStyle}
+                                style={{ ...inputStyle, paddingRight: '2.5rem' }}
                                 onFocus={e => (e.currentTarget.style.borderColor = '#5C8A5A')}
                                 onBlur={e => (e.currentTarget.style.borderColor = '#E2DDD6')}
                             />
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-medium block mb-1" style={{ color: '#9C9A94' }}>
-                                Category
-                            </label>
-                            <select
-                                value={categoryId}
-                                onChange={e => setCategoryId(e.target.value)}
-                                className={inputClass}
-                                style={{ ...inputStyle, appearance: 'auto' }}
-                                onFocus={e => (e.currentTarget.style.borderColor = '#5C8A5A')}
-                                onBlur={e => (e.currentTarget.style.borderColor = '#E2DDD6')}
+                            <span
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium pointer-events-none"
+                                style={{ color: '#9C9A94' }}
                             >
-                                <option value="">No category</option>
-                                {categories.map(c => (
-                                    <option key={c.category_id} value={c.category_id}>
-                                        {c.category_name}
-                                    </option>
-                                ))}
-                            </select>
+                                kg
+                            </span>
                         </div>
                     </div>
                 </div>
+
+                {error && (
+                    <p className="mt-3 text-xs" style={{ color: '#C0616A' }}>
+                        {error}
+                    </p>
+                )}
 
                 <button
                     onClick={handleAdd}
@@ -169,20 +201,14 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                                         <div className="flex items-center gap-2">
                                             <span
                                                 className="text-xs rounded-full px-2.5 py-0.5"
-                                                style={{
-                                                    backgroundColor: '#F3F2EF',
-                                                    color: '#6B6A66',
-                                                }}
+                                                style={{ backgroundColor: '#F3F2EF', color: '#6B6A66' }}
                                             >
-                                                {p.qty} in stock
+                                                {p.qty} kg
                                             </span>
                                             {cat && (
                                                 <span
                                                     className="text-xs rounded-full px-2.5 py-0.5 flex items-center gap-1"
-                                                    style={{
-                                                        backgroundColor: catStyle.bg,
-                                                        color: catStyle.text,
-                                                    }}
+                                                    style={{ backgroundColor: catStyle.bg, color: catStyle.text }}
                                                 >
                                                     <span
                                                         className="w-1.5 h-1.5 rounded-full inline-block"
@@ -196,17 +222,9 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                                     <button
                                         onClick={() => onRemove(p.id)}
                                         className="text-xs px-3 py-1.5 rounded-lg border transition-colors"
-                                        style={{
-                                            borderColor: '#FADADD',
-                                            color: '#C0616A',
-                                            backgroundColor: 'transparent',
-                                        }}
-                                        onMouseEnter={e => {
-                                            e.currentTarget.style.backgroundColor = '#FEF1F2'
-                                        }}
-                                        onMouseLeave={e => {
-                                            e.currentTarget.style.backgroundColor = 'transparent'
-                                        }}
+                                        style={{ borderColor: '#FADADD', color: '#C0616A', backgroundColor: 'transparent' }}
+                                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FEF1F2')}
+                                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
                                     >
                                         Remove
                                     </button>

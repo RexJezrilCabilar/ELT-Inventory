@@ -38,8 +38,8 @@ export default function SellTab({ products, categories, onSell }: Props) {
 
     async function handleSell(product: Product) {
         const raw = quantities[product.id]
-        const qty = parseInt(raw ?? '1')
-        if (isNaN(qty) || qty < 1 || qty > product.qty) return
+        const qty = parseFloat(raw ?? '0.1')
+        if (isNaN(qty) || qty <= 0 || qty > product.qty) return
 
         const { error: updateError } = await supabase
             .from('products')
@@ -120,25 +120,30 @@ export default function SellTab({ products, categories, onSell }: Props) {
                                         </span>
                                     </div>
                                     <span className="text-xs ml-4" style={{ color: '#9C9A94' }}>
-                                        {p.qty} left
+                                        {p.qty} kg left
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    <div className="relative">
                                     <input
                                         type="number"
-                                        min={1}
+                                        min={0.01}
+                                        step={0.01}
                                         max={p.qty}
-                                        value={quantities[p.id] ?? '1'}
+                                        value={quantities[p.id] ?? '0.1'}
                                         onChange={e => handleQtyChange(p.id, e.target.value)}
-                                        className="w-16 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none"
+                                        className="w-20 text-center border rounded-lg px-2 py-1.5 text-sm focus:outline-none"
                                         style={{
                                             borderColor: '#E2DDD6',
                                             backgroundColor: '#F7F5F0',
                                             color: '#1C1C1A',
+                                            paddingRight: '1.8rem',
                                         }}
                                         onFocus={e => (e.currentTarget.style.borderColor = '#5C8A5A')}
                                         onBlur={e => (e.currentTarget.style.borderColor = '#E2DDD6')}
                                     />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs pointer-events-none" style={{ color: '#9C9A94' }}>kg</span>
+                                    </div>
                                     <button
                                         onClick={() => handleSell(p)}
                                         className="text-sm px-4 py-1.5 rounded-lg font-medium transition-colors"
