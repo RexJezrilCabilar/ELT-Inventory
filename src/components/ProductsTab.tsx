@@ -23,6 +23,17 @@ function getCategoryStyle(categoryId: number | null) {
     return CATEGORY_COLORS[categoryId]
 }
 
+function formatTimestamp(ts?: string) {
+    if (!ts) return '—'
+    return new Date(ts).toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
+}
+
 export default function ProductsTab({ products, categories, onAdd, onRemove }: Props) {
     const [name, setName] = useState('')
     const [qty, setQty] = useState('')
@@ -140,8 +151,8 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                                 value={qty}
                                 onChange={e => setQty(e.target.value)}
                                 placeholder="e.g. 12.5"
-                                min={0.01}
-                                step={0.01}
+                                min={0.1}
+                                step={0.1}
                                 className={inputClass}
                                 style={{ ...inputStyle, paddingRight: '2.5rem' }}
                                 onFocus={e => (e.currentTarget.style.borderColor = '#5C8A5A')}
@@ -198,7 +209,7 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                                         <span className="text-sm font-medium" style={{ color: '#1C1C1A' }}>
                                             {p.name}
                                         </span>
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <span
                                                 className="text-xs rounded-full px-2.5 py-0.5"
                                                 style={{ backgroundColor: '#F3F2EF', color: '#6B6A66' }}
@@ -217,11 +228,19 @@ export default function ProductsTab({ products, categories, onAdd, onRemove }: P
                                                     {cat.category_name}
                                                 </span>
                                             )}
+                                            {p.created_at && (
+                                                <span
+                                                    className="text-xs"
+                                                    style={{ color: '#B0ADA6' }}
+                                                >
+                                                    Added {formatTimestamp(p.created_at)}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     <button
                                         onClick={() => onRemove(p.id)}
-                                        className="text-xs px-3 py-1.5 rounded-lg border transition-colors"
+                                        className="text-xs px-3 py-1.5 rounded-lg border transition-colors flex-shrink-0 ml-3"
                                         style={{ borderColor: '#FADADD', color: '#C0616A', backgroundColor: 'transparent' }}
                                         onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#FEF1F2')}
                                         onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'transparent')}
